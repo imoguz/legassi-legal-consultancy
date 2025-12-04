@@ -1,9 +1,7 @@
 import { useSelector, useDispatch } from "react-redux";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useRefreshTokenMutation, useMeQuery } from "@/rtk/api/authApi";
 import { setAuth, setLoading } from "@/rtk/features/authSlice";
-
-let authInitialized = false; // Global flag
 
 export const useAuth = () => {
   const dispatch = useDispatch();
@@ -16,45 +14,38 @@ export const useAuth = () => {
   });
   const initializedRef = useRef(false);
 
+  const initializeAuth = useCallback(async () => {
+    if (initializedRef.current || loading !== "idle") return;
+
+    dispatch(setLoading("pending"));
+
+    try {
+      // If accessToken but no user, fetch user data
+      if (accessToken && !user) {
+        const result = await refetchMe();
+        if (result.data) {
+          dispatch(
+            setAuth({
+              accessToken,
+              user: result.data.user,
+            })
+          );
+        }
+      } else if (!accessToken) {
+        await refreshToken().unwrap();
+      }
+    } catch (error) {
+      console.log("Auth init failed:", error);
+    } finally {
+      dispatch(setLoading("succeeded"));
+      initializedRef.current = true;
+    }
+  }, [accessToken, user, loading, dispatch, refreshToken, refetchMe]);
+
   // Initialize auth only once
   useEffect(() => {
-    if (initializedRef.current || authInitialized) return;
-
-    const initializeAuth = async () => {
-      if (loading !== "idle") return;
-
-      dispatch(setLoading("pending"));
-
-      try {
-        // If we have accessToken but no user, fetch user data
-        if (accessToken && !user) {
-          const result = await refetchMe();
-          if (result.data) {
-            dispatch(
-              setAuth({
-                accessToken,
-                user: result.data.user,
-              })
-            );
-          }
-        }
-        // If no accessToken, try to refresh
-        else if (!accessToken) {
-          const result = await refreshToken().unwrap();
-          dispatch(setAuth(result));
-        }
-      } catch (error) {
-        console.log("Auth init failed:", error);
-        // Don't dispatch anything, let middleware handle redirect
-      } finally {
-        dispatch(setLoading("succeeded"));
-        initializedRef.current = true;
-        authInitialized = true;
-      }
-    };
-
     initializeAuth();
-  }, [accessToken, user, loading, dispatch, refreshToken, refetchMe]);
+  }, [initializeAuth]);
 
   return {
     user,
