@@ -37,7 +37,7 @@ export const customBaseQuery = async (args, api, extraOptions) => {
   let result = await rawBaseQuery(args, api, extraOptions);
 
   // If 401, try to refresh token
-  if (result?.error?.status === 401) {
+  if (result?.error?.status === 401 || result?.error?.status === 403) {
     // If already refreshing, queue the request
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
