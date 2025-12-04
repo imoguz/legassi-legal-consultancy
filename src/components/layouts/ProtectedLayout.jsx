@@ -13,7 +13,7 @@ export default function ProtectedLayout({ children }) {
   const { isAuthenticated, isLoading, user } = useAuth();
 
   useEffect(() => {
-    // Only redirect when user is not authenticated
+    // Only redirect when user is not authenticated AND loading is complete
     if (!isLoading && !isAuthenticated) {
       router.replace("/auth/login");
     }

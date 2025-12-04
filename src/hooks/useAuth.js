@@ -2,22 +2,23 @@ import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useRef, useCallback } from "react";
 import { useRefreshTokenMutation, useMeQuery } from "@/rtk/api/authApi";
 import { setAuth, setLoading } from "@/rtk/features/authSlice";
+import { setRefreshToken } from "@/utils/helpers";
 
 export const useAuth = () => {
   const dispatch = useDispatch();
   const { accessToken, user, isAuthenticated, loading } = useSelector(
     (state) => state.auth
   );
-  const [refreshToken] = useRefreshTokenMutation();
-  const { refetch: refetchMe } = useMeQuery(undefined, {
+  const [refreshToken, { isLoading: isRefreshing }] = useRefreshTokenMutation();
+  const { refetch: refetchMe, isLoading: isMeLoading } = useMeQuery(undefined, {
     skip: !accessToken,
   });
   const initializedRef = useRef(false);
 
   const initializeAuth = useCallback(async () => {
-    if (initializedRef.current || loading !== "idle") return;
+    if (initializedRef.current) return;
 
-    dispatch(setLoading("pending"));
+    dispatch(setLoading(true));
 
     try {
       // If accessToken but no user, fetch user data
@@ -32,26 +33,33 @@ export const useAuth = () => {
           );
         }
       } else if (!accessToken) {
-        await refreshToken().unwrap();
+        // Refresh token from cookie
+        const result = await refreshToken().unwrap();
+        if (result.refreshToken) {
+          setRefreshToken(result.refreshToken);
+        }
       }
     } catch (error) {
       console.log("Auth init failed:", error);
     } finally {
-      dispatch(setLoading("succeeded"));
+      dispatch(setLoading(false));
       initializedRef.current = true;
     }
-  }, [accessToken, user, loading, dispatch, refreshToken, refetchMe]);
+  }, [accessToken, user, dispatch, refreshToken, refetchMe]);
 
   // Initialize auth only once
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
 
+  // Combined loading state
+  const isLoading = loading || isRefreshing || isMeLoading;
+
   return {
     user,
     accessToken,
     isAuthenticated,
-    isLoading: loading === "pending",
+    isLoading,
     role: user?.role,
   };
 };

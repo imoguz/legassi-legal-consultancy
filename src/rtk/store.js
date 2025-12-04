@@ -1,26 +1,26 @@
-import { configureStore } from '@reduxjs/toolkit';
-import authReducer from '@/rtk/features/authSlice';
-import aiDocumentSearchReducer from '@/rtk/features/aiDocumentSearchSlice';
-import sidebarReducer from '@/rtk/features/sidebarSlice';
-import storage from 'redux-persist/lib/storage';
-import { authApi } from '@/rtk/api/authApi';
-import { userApi } from '@/rtk/api/userApi';
-import { documentApi } from '@/rtk/api/documentApi';
-import { legalAssistantApi } from '@/rtk/api/legalAssistantApi';
-import { aiDocumentSearchApi } from '@/rtk/api/aiDocumentSearchApi';
-import { matterApi } from '@/rtk/api/matterApi';
-import { contactApi } from '@/rtk/api/contactApi';
-import { employeeApi } from '@/rtk/api/employeeApi';
-import { taskApi } from '@/rtk/api/taskApi';
-import { reportsApi } from '@/rtk/api/reportsApi';
-import { calendarEventApi } from '@/rtk/api/calendarEventApi';
-import { notificationApi } from '@/rtk/api/notificationApi';
-import { persistReducer, persistStore } from 'redux-persist';
-import { combineReducers } from 'redux';
-import { setupListeners } from '@reduxjs/toolkit/query';
-import { invoiceApi } from '@/rtk/api/invoiceApi';
-import { paymentApi } from '@/rtk/api/paymentApi';
-import { filtersApi } from '@/rtk/api/filtersApi';
+import { configureStore } from "@reduxjs/toolkit";
+import authReducer from "@/rtk/features/authSlice";
+import aiDocumentSearchReducer from "@/rtk/features/aiDocumentSearchSlice";
+import sidebarReducer from "@/rtk/features/sidebarSlice";
+import storage from "redux-persist/lib/storage";
+import { authApi } from "@/rtk/api/authApi";
+import { userApi } from "@/rtk/api/userApi";
+import { documentApi } from "@/rtk/api/documentApi";
+import { legalAssistantApi } from "@/rtk/api/legalAssistantApi";
+import { aiDocumentSearchApi } from "@/rtk/api/aiDocumentSearchApi";
+import { matterApi } from "@/rtk/api/matterApi";
+import { contactApi } from "@/rtk/api/contactApi";
+import { employeeApi } from "@/rtk/api/employeeApi";
+import { taskApi } from "@/rtk/api/taskApi";
+import { reportsApi } from "@/rtk/api/reportsApi";
+import { calendarEventApi } from "@/rtk/api/calendarEventApi";
+import { notificationApi } from "@/rtk/api/notificationApi";
+import { persistReducer, persistStore } from "redux-persist";
+import { combineReducers } from "redux";
+import { setupListeners } from "@reduxjs/toolkit/query";
+import { invoiceApi } from "@/rtk/api/invoiceApi";
+import { paymentApi } from "@/rtk/api/paymentApi";
+import { filtersApi } from "@/rtk/api/filtersApi";
 
 import {
   FLUSH,
@@ -29,7 +29,7 @@ import {
   PERSIST,
   PURGE,
   REGISTER,
-} from 'redux-persist';
+} from "redux-persist";
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -53,10 +53,10 @@ const rootReducer = combineReducers({
 });
 
 const persistConfig = {
-  key: 'root',
+  key: "root",
   version: 1,
   storage,
-  whitelist: ['auth', 'sidebar'],
+  whitelist: ["auth", "sidebar"],
   blacklist: [
     authApi.reducerPath,
     userApi.reducerPath,
@@ -102,7 +102,7 @@ export const store = configureStore({
       paymentApi.middleware,
       filtersApi.middleware
     ),
-  devTools: process.env.NODE_ENV !== 'production',
+  devTools: process.env.NODE_ENV !== "production",
 });
 
 export const persistor = persistStore(store);

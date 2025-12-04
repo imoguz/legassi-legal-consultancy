@@ -5,7 +5,7 @@ const initialState = {
   accessToken: null,
   user: null,
   isAuthenticated: false,
-  loading: "idle",
+  loading: true,
 };
 
 const authSlice = createSlice({
@@ -16,10 +16,11 @@ const authSlice = createSlice({
       state.accessToken = payload.accessToken;
       state.user = payload.user;
       state.isAuthenticated = true;
-      state.loading = "succeeded";
+      state.loading = false;
     },
     clearAuth: (state) => {
       Object.assign(state, initialState);
+      state.loading = false;
     },
     setLoading: (state, { payload }) => {
       state.loading = payload;
@@ -27,31 +28,47 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Handle all successful auth operations
+      // Handle successful login
       .addMatcher(
-        (action) =>
-          authApi.endpoints.login.matchFulfilled(action) ||
-          authApi.endpoints.refreshToken.matchFulfilled(action),
+        authApi.endpoints.login.matchFulfilled,
         (state, { payload }) => {
           state.accessToken = payload.accessToken;
           state.user = payload.user;
           state.isAuthenticated = true;
-          state.loading = "succeeded";
+          state.loading = false;
         }
       )
-      // Handle me endpoint
+      // Handle successful refresh token
+      .addMatcher(
+        authApi.endpoints.refreshToken.matchFulfilled,
+        (state, { payload }) => {
+          state.accessToken = payload.accessToken;
+          state.user = payload.user;
+          state.isAuthenticated = true;
+          state.loading = false;
+        }
+      )
+      // Handle me loading
+      .addMatcher(authApi.endpoints.me.matchPending, (state) => {
+        state.loading = true;
+      })
       .addMatcher(authApi.endpoints.me.matchFulfilled, (state, { payload }) => {
         state.user = payload.user;
         state.isAuthenticated = true;
-        state.loading = "succeeded";
+        state.loading = false;
+      })
+      .addMatcher(authApi.endpoints.me.matchRejected, (state) => {
+        state.loading = false;
       })
       // Handle logout
       .addMatcher(authApi.endpoints.logout.matchFulfilled, (state) => {
         Object.assign(state, initialState);
+        state.loading = false;
       })
       // Handle refresh failure
       .addMatcher(authApi.endpoints.refreshToken.matchRejected, (state) => {
         Object.assign(state, initialState);
+        state.loading = false;
       });
   },
 });

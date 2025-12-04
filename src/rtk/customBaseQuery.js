@@ -1,5 +1,10 @@
 import { fetchBaseQuery } from "@reduxjs/toolkit/query";
 import { setAuth, clearAuth } from "./features/authSlice";
+import {
+  setRefreshToken,
+  getRefreshToken,
+  removeRefreshToken,
+} from "@/utils/helpers";
 
 let isRefreshing = false;
 let failedQueue = [];
@@ -37,7 +42,7 @@ export const customBaseQuery = async (args, api, extraOptions) => {
   let result = await rawBaseQuery(args, api, extraOptions);
 
   // If 401, try to refresh token
-  if (result?.error?.status === 401 || result?.error?.status === 403) {
+  if (result?.error?.status === 401) {
     // If already refreshing, queue the request
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
@@ -50,10 +55,17 @@ export const customBaseQuery = async (args, api, extraOptions) => {
     isRefreshing = true;
 
     try {
+      const refreshToken = getRefreshToken();
+
+      if (!refreshToken) {
+        throw new Error("No refresh token available");
+      }
+
       const refreshResult = await rawBaseQuery(
         {
           url: "/auth/refresh-token",
           method: "POST",
+          body: { refreshToken },
           meta: { skipAuth: true },
         },
         api,
@@ -69,6 +81,11 @@ export const customBaseQuery = async (args, api, extraOptions) => {
           })
         );
 
+        // Store new refresh token in cookie
+        if (refreshResult.data.refreshToken) {
+          setRefreshToken(refreshResult.data.refreshToken);
+        }
+
         // Process queued requests
         processQueue(null, refreshResult.data.accessToken);
 
@@ -78,6 +95,7 @@ export const customBaseQuery = async (args, api, extraOptions) => {
         // Refresh failed - logout
         processQueue(new Error("Refresh failed"));
         api.dispatch(clearAuth());
+        removeRefreshToken();
 
         // Redirect to login
         if (typeof window !== "undefined") {
@@ -87,6 +105,7 @@ export const customBaseQuery = async (args, api, extraOptions) => {
     } catch (error) {
       processQueue(error);
       api.dispatch(clearAuth());
+      removeRefreshToken();
 
       if (typeof window !== "undefined") {
         window.location.href = "/auth/login";

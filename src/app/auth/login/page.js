@@ -7,7 +7,7 @@ import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { useLoginMutation } from "@/rtk/api/authApi";
 import { useAuth } from "@/hooks/useAuth";
-import { notify } from "@/utils/helpers";
+import { notify, setRefreshToken } from "@/utils/helpers";
 
 const { Title } = Typography;
 
@@ -16,17 +16,23 @@ const LoginPage = () => {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/dashboard";
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const [login, { isLoading }] = useLoginMutation();
+  const [login, { isLoading: isLoggingIn }] = useLoginMutation();
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!authLoading && isAuthenticated) {
       router.replace(redirect);
     }
-  }, [isAuthenticated, redirect, router]);
+  }, [isAuthenticated, authLoading, redirect, router]);
 
   const handleSubmit = async (values) => {
     try {
-      await login(values).unwrap();
+      const result = await login(values).unwrap();
+
+      // Store refresh token from response in cookie
+      if (result.refreshToken) {
+        setRefreshToken(result.refreshToken);
+      }
+
       notify.success("Login Successful", "Welcome back!");
     } catch (err) {
       notify.error(
@@ -45,7 +51,7 @@ const LoginPage = () => {
   }
 
   // Don't show login page if already authenticated
-  if (isAuthenticated) {
+  if (!authLoading && isAuthenticated) {
     return null;
   }
 
@@ -94,7 +100,7 @@ const LoginPage = () => {
             <Button
               type="primary"
               htmlType="submit"
-              loading={isLoading}
+              loading={isLoggingIn}
               block
               className="bg-blue-500 hover:bg-blue-600"
             >
