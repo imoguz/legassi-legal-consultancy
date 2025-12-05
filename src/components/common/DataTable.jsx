@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { Table, Button, Dropdown, Input } from 'antd';
-import { SearchOutlined, MoreOutlined } from '@ant-design/icons';
-import { useState, useEffect, useCallback } from 'react';
+import { Table, Button, Dropdown, Input } from "antd";
+import { SearchOutlined, MoreOutlined } from "@ant-design/icons";
+import { useState, useEffect, useCallback } from "react";
 
 const useDebounce = (value, delay = 500) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -18,7 +18,7 @@ export default function DataTable({
   tableState = {
     page: 1,
     offset: 0,
-    searchText: '',
+    searchText: "",
     filters: {},
     sorter: {},
   },
@@ -29,17 +29,17 @@ export default function DataTable({
   selectMenuItems = [],
   showSearchInput = false,
   onRowClick,
-  rowKey = '_id',
+  rowKey = "_id",
   pageSize = 10,
   showRowSelection = true,
   editable = false,
-  editingKey = '',
+  editingKey = "",
   onSave = () => {},
   onDelete = () => {},
   ...props
 }) {
-  // SEARCH (debounced → backend)
-  const [searchText, setSearchText] = useState(tableState.searchText || '');
+  // Search - debounced
+  const [searchText, setSearchText] = useState(tableState.searchText || "");
   const debouncedSearch = useDebounce(searchText);
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export default function DataTable({
     }));
   }, [debouncedSearch, setTableState]);
 
-  // PAGE CHANGE
+  // Page Change
   const handlePageChange = useCallback(
     (page) => {
       const newOffset = (page - 1) * pageSize;
@@ -64,13 +64,13 @@ export default function DataTable({
     [pageSize, setTableState]
   );
 
-  // TABLE CHANGE → backend-driven sorting & filtering
+  // Backend-driven sorting & filtering
   const handleTableChange = (pagination, filters, sorter) => {
     setTableState?.((prev) => ({
       ...prev,
       page: pagination.current,
       offset: (pagination.current - 1) * pageSize,
-      filters, // backend’e direkt gidiyor
+      filters,
       sorter: {
         field: sorter.field,
         order: sorter.order,
@@ -78,7 +78,7 @@ export default function DataTable({
     }));
   };
 
-  // ROW SELECTION
+  // Row selection
   const rowSelection = showRowSelection
     ? {
         selectedRowKeys,
@@ -86,7 +86,7 @@ export default function DataTable({
       }
     : null;
 
-  // BULK ACTION MENU
+  // Bulk action menu
   const actionMenu =
     selectedRowKeys.length > 0 && selectMenuItems.length > 0 ? (
       <Dropdown menu={{ items: selectMenuItems }} placement="bottomLeft">
@@ -96,14 +96,13 @@ export default function DataTable({
 
   // HEADER
   const TableHeader = (showSearchInput || actionMenu) && (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2 p-3">
+    <div className="flex flex-col bg-sider-header sm:flex-row sm:items-center justify-between gap-3 py-3 px-4">
       {showSearchInput && (
         <Input
           placeholder="Search..."
           variant="borderless"
           prefix={<SearchOutlined />}
-          style={{ borderBottom: '1px solid gray' }}
-          className="!border border-gray-300 rounded-none w-full max-w-sm"
+          className="rounded-none! border-b! border-gray-300! w-full max-w-sm"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           allowClear
@@ -113,18 +112,15 @@ export default function DataTable({
     </div>
   );
 
-  // CLEAN COLUMNS (local onFilter / local sorter tamamen kaldırıldı)
   const processedColumns = columns.map((col) => {
     const newCol = { ...col };
 
-    // Local filtering logic varsa kaldır (backend filtering kullanılacak)
     if (newCol.onFilter) {
       delete newCol.onFilter;
     }
 
-    // Local sorter function kaldır (backend sorting kullanılacak)
-    if (typeof newCol.sorter === 'function') {
-      newCol.sorter = true; // UI sorting toggle kalsın, logic backend’den çalışsın
+    if (typeof newCol.sorter === "function") {
+      newCol.sorter = true;
     }
 
     // Editable logic
@@ -144,7 +140,7 @@ export default function DataTable({
   });
 
   return (
-    <div className="flex flex-col bg-white border border-solid border-gray-200 rounded-lg shadow-sm overflow-x-auto">
+    <div className="flex flex-col custom-shadow-1 rounded-lg overflow-x-auto">
       {TableHeader}
 
       <Table
@@ -161,7 +157,7 @@ export default function DataTable({
         }}
         rowClassName={(record) =>
           `cursor-pointer hover:bg-gray-50 ${
-            editingKey === record[rowKey] ? 'editable-row' : ''
+            editingKey === record[rowKey] ? "editable-row" : ""
           }`
         }
         onRow={
@@ -173,7 +169,7 @@ export default function DataTable({
         }
         onChange={handleTableChange}
         {...props}
-        scroll={{ x: 'max-content' }}
+        scroll={{ x: "max-content" }}
       />
     </div>
   );

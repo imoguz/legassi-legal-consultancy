@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+@theme {
+  /*  Tailwind Configs
+   * --color-sider-background -> bg-sider-background
+   */
+  --color-sider-background: #0a043c;
+  --color-sider-header: #0d92f4;
+  --color-sider-menu: #0a043c;
+  --color-sider-content: #ffffff;
+  --color-sider-item-hover: #1640d6;
+  --color-sider-item-selected: #1640d6;
+  --color-sider-item-text: #ffffff;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

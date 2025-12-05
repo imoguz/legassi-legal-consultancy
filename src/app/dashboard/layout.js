@@ -8,7 +8,7 @@ import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { getSidebarItems } from "@/utils/constants/sidebarMenuItems";
 import { toggleSidebar, setSidebar } from "@/rtk/features/sidebarSlice";
-import { useAuth } from "@/hooks/useAuth"; // useAuth hook'unu import edin
+import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
 const { Header, Content, Sider } = Layout;
@@ -57,7 +57,7 @@ export default function DashboardLayout({ children }) {
         onCollapse={(val) => dispatch(setSidebar(val))}
         trigger={null}
         width={300}
-        className="custom-scrollbar bg-sider-background shadow sticky top-0 h-screen overflow-y-auto"
+        className="custom-scrollbar bg-sider-background! shadow sticky top-0 h-screen overflow-y-auto"
       >
         {/* Logo */}
         <div
@@ -72,8 +72,6 @@ export default function DashboardLayout({ children }) {
             priority
           />
         </div>
-
-        <Divider className="border-sider-item-hover my-0" />
 
         {/* Collapse / Expand */}
         <div className="flex justify-end px-4 pt-1">
@@ -91,12 +89,12 @@ export default function DashboardLayout({ children }) {
           selectedKeys={[selectedKey]}
           items={sidebarItems}
           onClick={handleMenuClick}
-          className="custom-menu bg-sider-background"
+          className="custom-menu bg-sider-background!"
         />
       </Sider>
 
       <Layout className="min-h-screen">
-        <Header className="shadow-sm bg-sider-header p-0 h-16 flex items-center">
+        <Header className="shadow-sm bg-sider-header! p-0 h-16 flex items-center">
           <DashboardHeader />
         </Header>
 
