@@ -1,10 +1,24 @@
-import React from 'react';
-import { Col, Row, Typography } from 'antd';
-import Image from 'next/image';
-import { HOMEPAGE_FEATURES } from '@/utils/constants';
+"use client";
+
+import React from "react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
+import { Col, Row, Typography } from "antd";
+import Image from "next/image";
+import { HOMEPAGE_FEATURES } from "@/utils/constants";
 const { Title, Paragraph } = Typography;
 
-const MainHome = () => {
+const Home = () => {
+  const router = useRouter();
+  const { isAuthenticated, loading } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [isAuthenticated, loading, router]);
+
   return (
     <>
       <main
@@ -16,14 +30,14 @@ const MainHome = () => {
         <Row className="relative z-10 w-full p-6 lg:p-8 xl:p-10 pt-24 lg:pt-28 xl:pt-32">
           <Col xs={24} md={12}>
             <div className="w-full p-6 lg:p-8 xl:p-10">
-              <Title className="!text-4xl sm:!text-5xl md:!text-4xl lg:!text-5xl xl:!text-6xl !font-bold !leading-tight !text-white drop-shadow">
+              <Title className="text-4xl! sm:text-5xl! md:text-4xl! lg:text-5xl! xl:text-6xl! font-bold! leading-tight! text-white! drop-shadow">
                 Power your
                 <br />
                 AI-powered legal research
                 <br />
                 and consultancy
               </Title>
-              <Paragraph className="mt-4 !text-xl !text-gray-100 drop-shadow">
+              <Paragraph className="mt-4 text-xl! text-gray-100! drop-shadow">
                 Ask complex legal questions in your own words, discover trusted
                 documents instantly, and manage your clients and cases — all
                 with AI at your side.
@@ -126,4 +140,4 @@ const MainHome = () => {
   );
 };
 
-export default MainHome;
+export default Home;

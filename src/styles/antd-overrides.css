@@ -1,0 +1,61 @@
+/* Ant Design Menu Item*/
+
+.mainheader .ant-menu-item {
+  color: #ececec !important;
+}
+
+.mainheader .ant-menu-item:hover,
+.mainheader .ant-menu-item-active,
+.mainheader .ant-menu-item-selected {
+  color: #ffffff !important;
+}
+
+.mainheader
+  .ant-menu-light.ant-menu-horizontal
+  > .ant-menu-item-selected::after,
+.mainheader
+  .ant-menu-light.ant-menu-horizontal
+  > .ant-menu-submenu-selected::after {
+  border-color: #8d6789 !important;
+}
+
+.mainheader .ant-menu-light.ant-menu-horizontal > .ant-menu-item:hover::after,
+.mainheader
+  .ant-menu-light.ant-menu-horizontal
+  > .ant-menu-submenu:hover::after {
+  border-color: #8d6789 !important;
+}
+.ant-layout-sider {
+  width: 400px !important;
+}
+
+/* Webkit tabanlı tarayıcılar için */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.hide-tooltips .ant-tooltip {
+  display: none !important;
+}
+.hide-tooltips .ant-upload-list-item-error {
+  border-color: #d9d9d9 !important;
+}
+
+.aisearch-container .ant-drawer:focus,
+.aisearch-container .ant-drawer .ant-drawer-content:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.ant-timeline-item-icon {
+  z-index: 0 !important;
+}
