@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from "react";
 import {
   Modal,
   Form,
@@ -13,62 +13,62 @@ import {
   Divider,
   Switch,
   Checkbox,
-} from 'antd';
+} from "antd";
 import {
   PlusOutlined,
   MinusCircleOutlined,
   UserOutlined,
   EditOutlined,
-} from '@ant-design/icons';
+} from "@ant-design/icons";
 
 import {
   useCreateTaskMutation,
   useUpdateTaskMutation,
   useGetTaskMattersQuery,
-} from '@/rtk/api/taskApi';
+} from "@/rtk/api/taskApi";
 
-import { useGetStaffQuery } from '@/rtk/api/userApi';
-import { notify } from '@/utils/helpers';
-import dayjs from 'dayjs';
+import { useGetStaffQuery } from "@/rtk/api/userApi";
+import { notify } from "@/utils/helpers";
+import dayjs from "dayjs";
 
-import VisibilitySelector from '@/components/common/VisibilitySelector';
-import UploadFile from '@/components/common/UploadFile';
+import VisibilitySelector from "@/components/common/VisibilitySelector";
+import UploadFile from "@/components/common/UploadFile";
 
-const { TextArea, Option } = Input;
+const { TextArea } = Input;
 
 const PRIORITY_OPTIONS = [
-  { value: 'low', label: 'Low', color: 'green' },
-  { value: 'medium', label: 'Medium', color: 'blue' },
-  { value: 'high', label: 'High', color: 'orange' },
-  { value: 'urgent', label: 'Urgent', color: 'red' },
+  { value: "low", label: "Low", color: "green" },
+  { value: "medium", label: "Medium", color: "blue" },
+  { value: "high", label: "High", color: "orange" },
+  { value: "urgent", label: "Urgent", color: "red" },
 ];
 
 const STATUS_OPTIONS = [
-  { value: 'open', label: 'Open', color: 'blue' },
-  { value: 'in-progress', label: 'In Progress', color: 'orange' },
-  { value: 'waiting', label: 'Waiting', color: 'gold' },
-  { value: 'completed', label: 'Completed', color: 'green' },
-  { value: 'cancelled', label: 'Cancelled', color: 'red' },
+  { value: "open", label: "Open", color: "blue" },
+  { value: "in-progress", label: "In Progress", color: "orange" },
+  { value: "waiting", label: "Waiting", color: "gold" },
+  { value: "completed", label: "Completed", color: "green" },
+  { value: "cancelled", label: "Cancelled", color: "red" },
 ];
 
 const ChecklistItem = ({ item, index, items, onChange, onRemove, mode }) => (
   <div className="flex items-center gap-3">
     <Checkbox
       checked={item.completed}
-      onChange={(e) => onChange(index, 'completed', e.target.checked)}
-      disabled={mode === 'create'}
+      onChange={(e) => onChange(index, "completed", e.target.checked)}
+      disabled={mode === "create"}
     />
     <Input
       placeholder={`Checklist item ${index + 1}`}
       value={item.title}
-      onChange={(e) => onChange(index, 'title', e.target.value)}
+      onChange={(e) => onChange(index, "title", e.target.value)}
       size="large"
       className="flex-1"
     />
     {items.length > 1 && (
       <Button
-        type="text"
-        danger
+        type="default"
+        size="large"
         icon={<MinusCircleOutlined />}
         onClick={() => onRemove(index)}
       />
@@ -95,29 +95,30 @@ const AssigneeItem = ({
             ? { value: assignee.userId, label: selected?.label }
             : null
         }
-        onChange={(v) => onChange(index, 'userId', v?.value)}
+        onChange={(v) => onChange(index, "userId", v?.value)}
         style={{ flex: 1 }}
         options={availableStaff}
-        showSearch
-        optionFilterProp="label"
+        showSearch={{
+          optionFilterProp: "label",
+        }}
         size="large"
         labelInValue
       />
 
       <Select
         value={assignee.isPrimary}
-        onChange={(v) => onChange(index, 'isPrimary', v)}
+        onChange={(v) => onChange(index, "isPrimary", v)}
         size="large"
         style={{ width: 140 }}
         options={[
-          { label: 'Contributor', value: false },
-          { label: 'Primary', value: true },
+          { label: "Contributor", value: false },
+          { label: "Primary", value: true },
         ]}
       />
 
       <Button
-        type="text"
-        danger
+        type="default"
+        size="large"
         icon={<MinusCircleOutlined />}
         onClick={() => onRemove(index)}
       />
@@ -125,7 +126,7 @@ const AssigneeItem = ({
   );
 };
 
-export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
+export default function TaskModal({ visible, onClose, task, mode = "create" }) {
   const [form] = Form.useForm();
   const [createTask, { isLoading: loadingCreate }] = useCreateTaskMutation();
   const [updateTask, { isLoading: loadingUpdate }] = useUpdateTaskMutation();
@@ -133,7 +134,7 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
   const [assignees, setAssignees] = useState([]);
   const [hasChecklist, setHasChecklist] = useState(false);
   const [checklistItems, setChecklistItems] = useState([
-    { title: '', completed: false },
+    { title: "", completed: false },
   ]);
   const [fileList, setFileList] = useState([]);
 
@@ -168,48 +169,54 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
   useEffect(() => {
     if (!visible) return;
 
-    if (task && mode === 'edit') {
-      setAssignees(
-        (task.assignees || []).map((a) => ({
+    const id = setTimeout(() => {
+      if (task && mode === "edit") {
+        const formValues = {
+          title: task.title,
+          description: task.description,
+          matter: task.matter?._id,
+          priority: task.priority,
+          status: task.status,
+          dueDate: task.dueDate ? dayjs(task.dueDate) : null,
+          estimatedMinutes: task.estimatedMinutes,
+          visibility: task.visibility,
+          permittedUsers: task.permittedUsers?.map((u) => u._id || u),
+        };
+
+        const initialAssignees = (task.assignees || []).map((a) => ({
           userId: a.user?._id,
           isPrimary: a.isPrimary,
-        }))
-      );
+        }));
 
-      const hasList = task.checklist?.length > 0;
-      setHasChecklist(hasList);
-      setChecklistItems(
-        hasList ? task.checklist : [{ title: '', completed: false }]
-      );
+        const hasList = task.checklist?.length > 0;
 
-      setFileList(
-        (task.attachments || []).map((f) => ({
+        const initialChecklist = hasList
+          ? task.checklist
+          : [{ title: "", completed: false }];
+
+        const initialFiles = (task.attachments || []).map((f) => ({
           ...f,
           uid: f._id,
-          status: 'done',
+          status: "done",
           name: f.filename || f.name,
           url: f.url || f.path,
-        }))
-      );
+        }));
 
-      form.setFieldsValue({
-        title: task.title,
-        description: task.description,
-        matter: task.matter?._id,
-        priority: task.priority,
-        status: task.status,
-        dueDate: task.dueDate ? dayjs(task.dueDate) : null,
-        estimatedMinutes: task.estimatedMinutes,
-        visibility: task.visibility,
-        permittedUsers: task.permittedUsers?.map((u) => u._id || u),
-      });
-    } else {
-      form.resetFields();
-      setAssignees([]);
-      setHasChecklist(false);
-      setChecklistItems([{ title: '', completed: false }]);
-      setFileList([]);
-    }
+        form.setFieldsValue(formValues);
+        setAssignees(initialAssignees);
+        setHasChecklist(hasList);
+        setChecklistItems(initialChecklist);
+        setFileList(initialFiles);
+      } else {
+        form.resetFields();
+        setAssignees([]);
+        setHasChecklist(false);
+        setChecklistItems([{ title: "", completed: false }]);
+        setFileList([]);
+      }
+    }, 0);
+
+    return () => clearTimeout(id);
   }, [visible]);
 
   const handleSubmit = async (values) => {
@@ -218,17 +225,17 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
 
       Object.entries({
         title: values.title,
-        description: values.description || '',
+        description: values.description || "",
         matter: values.matter,
         priority: values.priority,
         visibility: values.visibility,
-        status: values.status || 'open',
+        status: values.status || "open",
       }).forEach(([k, v]) => formData.append(k, v));
 
       if (values.dueDate)
-        formData.append('dueDate', values.dueDate.toISOString());
+        formData.append("dueDate", values.dueDate.toISOString());
       if (values.estimatedMinutes)
-        formData.append('estimatedMinutes', values.estimatedMinutes);
+        formData.append("estimatedMinutes", values.estimatedMinutes);
 
       // assignees
       assignees.forEach((a, i) => {
@@ -239,7 +246,7 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
 
       // permitted users
       (values.permittedUsers || []).forEach((u) =>
-        formData.append('permittedUsers', u)
+        formData.append("permittedUsers", u)
       );
 
       // checklist
@@ -255,10 +262,10 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
 
       // files
       const newFiles = fileList.filter((f) => f.originFileObj);
-      newFiles.forEach((f) => formData.append('files', f.originFileObj));
+      newFiles.forEach((f) => formData.append("files", f.originFileObj));
 
       // deleted files (edit mode)
-      if (mode === 'edit' && task) {
+      if (mode === "edit" && task) {
         const original = task.attachments || [];
         const remaining = fileList.filter((f) => f._id && !f.originFileObj);
 
@@ -266,21 +273,21 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
           (orig) => !remaining.some((r) => r._id === orig._id)
         );
 
-        deleted.forEach((d) => formData.append('deletedAttachments', d._id));
+        deleted.forEach((d) => formData.append("deletedAttachments", d._id));
       }
 
-      if (mode === 'create') {
+      if (mode === "create") {
         await createTask(formData).unwrap();
-        notify.success('Success', 'Task created successfully');
+        notify.success("Success", "Task created successfully");
       } else {
         await updateTask({ id: task._id, formData }).unwrap();
-        notify.success('Success', 'Task updated successfully');
+        notify.success("Success", "Task updated successfully");
       }
 
       handleCancel();
     } catch (err) {
       console.error(err);
-      notify.error('Error', `Failed to ${mode} task`);
+      notify.error("Error", `Failed to ${mode} task`);
     }
   };
 
@@ -288,7 +295,7 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
     form.resetFields();
     setAssignees([]);
     setHasChecklist(false);
-    setChecklistItems([{ title: '', completed: false }]);
+    setChecklistItems([{ title: "", completed: false }]);
     setFileList([]);
     onClose();
   };
@@ -303,8 +310,8 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
       mask={{ blur: false }}
       title={
         <div className="flex items-center gap-2">
-          {mode === 'create' ? <PlusOutlined /> : <EditOutlined />}
-          <span>{mode === 'create' ? 'Create New Task' : 'Edit Task'}</span>
+          {mode === "create" ? <PlusOutlined /> : <EditOutlined />}
+          <span>{mode === "create" ? "Create New Task" : "Edit Task"}</span>
         </div>
       }
     >
@@ -313,9 +320,9 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
         layout="vertical"
         onFinish={handleSubmit}
         initialValues={{
-          priority: 'medium',
-          status: 'open',
-          visibility: 'internal',
+          priority: "medium",
+          status: "open",
+          visibility: "internal",
         }}
       >
         <div className="space-y-4">
@@ -323,7 +330,7 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
           <Form.Item
             name="title"
             label="Task Title"
-            rules={[{ required: true, message: 'Please enter task title' }]}
+            rules={[{ required: true, message: "Please enter task title" }]}
           >
             <Input placeholder="Enter task title" size="large" />
           </Form.Item>
@@ -342,7 +349,7 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
             <Form.Item
               name="matter"
               label="Related Matter"
-              rules={[{ required: true, message: 'Please select a matter' }]}
+              rules={[{ required: true, message: "Please select a matter" }]}
             >
               <Select
                 size="large"
@@ -350,7 +357,7 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
                 placeholder="Select matter"
                 loading={!matterOptions.length}
                 showSearch={{
-                  optionFilterProp: 'label',
+                  optionFilterProp: "label",
                 }}
               />
             </Form.Item>
@@ -372,7 +379,7 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
           </div>
 
           {/* Status – only in edit */}
-          {mode === 'edit' && (
+          {mode === "edit" && (
             <Form.Item name="status" label="Status">
               <Select size="large">
                 {STATUS_OPTIONS.map((o) => (
@@ -427,7 +434,7 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
               <Button
                 type="dashed"
                 icon={<PlusOutlined />}
-                className="w-full max-w-64 mt-2 rounded-full"
+                className="w-full max-w-64 mt-2 rounded-full!"
                 onClick={() =>
                   setAssignees((p) => [
                     ...p,
@@ -454,7 +461,7 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
                 checked={hasChecklist}
                 onChange={(v) => {
                   setHasChecklist(v);
-                  if (!v) setChecklistItems([{ title: '', completed: false }]);
+                  if (!v) setChecklistItems([{ title: "", completed: false }]);
                 }}
               />
             </div>
@@ -486,7 +493,7 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
                     onClick={() =>
                       setChecklistItems((p) => [
                         ...p,
-                        { title: '', completed: false },
+                        { title: "", completed: false },
                       ])
                     }
                     block
@@ -507,21 +514,19 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
                 showTime
                 format="YYYY-MM-DD HH:mm"
                 size="large"
-                style={{ width: '100%' }}
-                disabledDate={(d) => d && d < dayjs().startOf('day')}
+                style={{ width: "100%" }}
+                disabledDate={(d) => d && d < dayjs().startOf("day")}
               />
             </Form.Item>
 
             <Form.Item name="estimatedMinutes" label="Estimated Minutes">
-              <Space.Compact>
-                <InputNumber
-                  min={0}
-                  size="large"
-                  style={{ width: '100%' }}
-                  placeholder="120"
-                />
-                <Space.Addon>min</Space.Addon>
-              </Space.Compact>
+              <InputNumber
+                suffix="min"
+                min={0}
+                size="large"
+                style={{ width: "100%" }}
+                placeholder="120"
+              />
             </Form.Item>
           </div>
 
@@ -550,9 +555,9 @@ export default function TaskModal({ visible, onClose, task, mode = 'create' }) {
             htmlType="submit"
             size="large"
             loading={isLoading}
-            icon={mode === 'create' ? <PlusOutlined /> : <EditOutlined />}
+            icon={mode === "create" ? <PlusOutlined /> : <EditOutlined />}
           >
-            {mode === 'create' ? 'Create Task' : 'Update Task'}
+            {mode === "create" ? "Create Task" : "Update Task"}
           </Button>
         </div>
       </Form>

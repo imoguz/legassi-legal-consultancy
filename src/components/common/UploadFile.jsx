@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Upload, Button, Space, List } from 'antd';
+import React from "react";
+import { Upload, Button, Space } from "antd";
 import {
   PaperClipOutlined,
-  DeleteOutlined,
   EyeOutlined,
-} from '@ant-design/icons';
+  MinusCircleOutlined,
+} from "@ant-design/icons";
 
 const UploadFile = ({
   fileList = [],
@@ -30,25 +30,68 @@ const UploadFile = ({
 
   const handlePreview = (file) => {
     if (file.url) {
-      window.open(file.url, '_blank');
+      window.open(file.url, "_blank");
     } else if (file.originFileObj) {
       const url = URL.createObjectURL(file.originFileObj);
-      window.open(url, '_blank');
+      window.open(url, "_blank");
     }
   };
 
-  // Maksimum dosya sayısı kontrolü
+  // Maksimum file count
   const isMaxFilesReached = fileList.length >= maxFiles;
 
   return (
-    <div className="space-y-4">
+    <div className="w-full">
+      {fileList.length > 0 && (
+        <Space orientation="vertical" className="w-full">
+          {fileList.map((file, index) => (
+            <div
+              key={file.uid || file._id || index}
+              className="flex items-center justify-between gap-3"
+            >
+              <div className="flex items-center justify-between flex-1 border pl-3.5 min-h-10 rounded-lg border-gray-300">
+                <div className="flex items-center gap-2 flex-1">
+                  <PaperClipOutlined className="text-gray-400" />
+                  <span className="text-sm text-gray-700 flex-1">
+                    {file.name || file.filename || `Dosya ${index + 1}`}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {file.size
+                      ? `(${(file.size / 1024 / 1024).toFixed(2)} MB)`
+                      : ""}
+                  </span>
+                </div>
+                {(file.url || file.originFileObj) && (
+                  <Button
+                    type="text"
+                    size="large"
+                    icon={<EyeOutlined />}
+                    onClick={() => handlePreview(file)}
+                    title="preview"
+                    className="mx-1"
+                  />
+                )}
+              </div>
+              {!disabled && (
+                <Button
+                  type="default"
+                  size="large"
+                  icon={<MinusCircleOutlined />}
+                  onClick={() => handleRemove(file)}
+                  title="Remove"
+                />
+              )}
+            </div>
+          ))}
+        </Space>
+      )}
       <Upload
         fileList={fileList}
         onChange={handleUploadChange}
         beforeUpload={(file, fileList) => {
           if (fileList.length + existingFiles.length > maxFiles) {
             notify.warning(
-              'Warning',
+              "Warning",
               `Maximum ${maxFiles} files can be uploaded.`
             );
 
@@ -60,60 +103,17 @@ const UploadFile = ({
         multiple
         showUploadList={false}
         disabled={disabled || isMaxFilesReached}
+        className="flex justify-center"
       >
         <Button
+          type="dashed"
           icon={<PaperClipOutlined />}
           disabled={disabled || isMaxFilesReached}
+          className="w-64 mt-3 rounded-full!"
         >
           Upload File ({fileList.length}/{maxFiles})
         </Button>
       </Upload>
-
-      {fileList.length > 0 && (
-        <div className="border rounded-lg p-4 bg-gray-50">
-          <Space direction="vertical" className="w-full">
-            {fileList.map((file, index) => (
-              <div
-                key={file.uid || file._id || index}
-                className="flex items-center justify-between p-2 bg-white rounded border"
-              >
-                <div className="flex items-center gap-2 flex-1">
-                  <PaperClipOutlined className="text-gray-400" />
-                  <span className="text-sm text-gray-700 flex-1">
-                    {file.name || file.filename || `Dosya ${index + 1}`}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {file.size
-                      ? `(${(file.size / 1024 / 1024).toFixed(2)} MB)`
-                      : ''}
-                  </span>
-                </div>
-                <Space>
-                  {(file.url || file.originFileObj) && (
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<EyeOutlined />}
-                      onClick={() => handlePreview(file)}
-                      title="Önizleme"
-                    />
-                  )}
-                  {!disabled && (
-                    <Button
-                      type="text"
-                      size="small"
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={() => handleRemove(file)}
-                      title="Sil"
-                    />
-                  )}
-                </Space>
-              </div>
-            ))}
-          </Space>
-        </div>
-      )}
     </div>
   );
 };

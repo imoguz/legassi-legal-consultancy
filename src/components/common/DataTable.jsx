@@ -94,9 +94,17 @@ export default function DataTable({
       </Dropdown>
     ) : null;
 
+  const hasActiveFilters =
+    (tableState.filters &&
+      Object.keys(tableState.filters).some((key) => {
+        const v = tableState.filters[key];
+        return Array.isArray(v) ? v.length > 0 : !!v;
+      })) ||
+    !!tableState.sorter?.order;
+
   // HEADER
   const TableHeader = (showSearchInput || actionMenu) && (
-    <div className="flex flex-col bg-sider-header sm:flex-row sm:items-center justify-between gap-3 py-3 px-4">
+    <div className="flex flex-col bg-gray-50 sm:flex-row sm:items-center justify-between gap-3 py-3 px-4">
       {showSearchInput && (
         <Input
           placeholder="Search..."
@@ -108,7 +116,24 @@ export default function DataTable({
           allowClear
         />
       )}
-      {actionMenu}
+      <div className="flex items-center gap-2">
+        {actionMenu}
+        {hasActiveFilters && (
+          <Button
+            onClick={() =>
+              setTableState((prev) => ({
+                ...prev,
+                filters: {},
+                sorter: {},
+                page: 1,
+                offset: 0,
+              }))
+            }
+          >
+            Clear Filters ({total})
+          </Button>
+        )}
+      </div>
     </div>
   );
 

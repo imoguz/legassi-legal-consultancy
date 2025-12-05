@@ -85,7 +85,7 @@ const InfoItem = ({ label, children }) => (
 );
 
 const AssigneeItem = ({ a }) => (
-  <div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
+  <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
     <Avatar src={a.user?.profileUrl} icon={<UserOutlined />} />
     <div className="flex-1">
       <div className="font-medium">
