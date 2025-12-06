@@ -5,7 +5,6 @@ import {
   Card,
   Tag,
   Avatar,
-  List,
   Button,
   Typography,
   Timeline,
@@ -29,7 +28,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import DetailHeader from "@/components/common/DetailHeader";
 import TaskModal from "@/components/tasks/TaskModal";
-import DocPreview from "@/components/common/DocPreview";
+import DocumentViewer from "@/components/common/DocumentViewer";
 
 dayjs.extend(relativeTime);
 const { Text, Paragraph, Title } = Typography;
@@ -126,7 +125,7 @@ const EmptyState = ({ icon, text }) => (
   </div>
 );
 
-export default function TaskDetailPage() {
+const TaskDetailPage = () => {
   const router = useRouter();
   const params = useParams();
   const [editVisible, setEditVisible] = useState(false);
@@ -348,8 +347,8 @@ export default function TaskDetailPage() {
             )}
 
             {isPreviewOpen && selectedFile && (
-              <DocPreview
-                image={selectedFile}
+              <DocumentViewer
+                document={selectedFile}
                 onClose={() => {
                   setIsPreviewOpen(false);
                   setSelectedFile(null);
@@ -368,4 +367,6 @@ export default function TaskDetailPage() {
       />
     </div>
   );
-}
+};
+
+export default TaskDetailPage;

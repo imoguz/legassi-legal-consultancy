@@ -42,17 +42,17 @@ const PDFViewer = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex items-center justify-center h-full">
-        <Spin size="large" tip="Loading PDF viewer..." />
+        <Spin size="large" />
       </div>
     ),
   }
 );
 
-const DocPreview = ({ image, onClose }) => {
+const DocumentViewer = ({ document, onClose }) => {
   const [cssLoaded, setCssLoaded] = useState(false);
 
-  const isImage = image?.mimeType?.startsWith("image/");
-  const isPDF = image?.mimeType === "application/pdf";
+  const isImage = document?.mimeType?.startsWith("image/");
+  const isPDF = document?.mimeType === "application/pdf";
 
   useEffect(() => {
     if (isPDF && !cssLoaded) {
@@ -67,7 +67,7 @@ const DocPreview = ({ image, onClose }) => {
           <Image
             width={800}
             alt="basic"
-            src={image?.url}
+            src={document?.url}
             preview={{
               mask: { blur: false },
             }}
@@ -78,7 +78,7 @@ const DocPreview = ({ image, onClose }) => {
     }
 
     if (isPDF) {
-      return <PDFViewer fileUrl={image?.url} />;
+      return <PDFViewer fileUrl={document?.url} />;
     }
 
     return (
@@ -98,11 +98,11 @@ const DocPreview = ({ image, onClose }) => {
       <div className="flex items-center justify-between py-2 px-8 bg-[#eeeeee]">
         <div className="flex flex-col">
           <span className="font-semibold text-gray-800">
-            {image?.filename || image?.originalName || "Preview"}
+            {document?.filename || document?.originalName || "Preview"}
           </span>
           <span className="text-sm text-gray-500">
             {isImage ? "Image " : isPDF ? "PDF Document " : "File "} •{" "}
-            {Math.round(image?.size / 1024)} KB
+            {Math.round(document?.size / 1024)} KB
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -110,8 +110,8 @@ const DocPreview = ({ image, onClose }) => {
             <Button
               icon={<DownloadOutlined />}
               type="primary"
-              href={image?.url}
-              download={image?.filename || image?.originalName}
+              href={document?.url}
+              download={document?.filename || document?.originalName}
               target="_blank"
             >
               Download
@@ -126,4 +126,4 @@ const DocPreview = ({ image, onClose }) => {
   );
 };
 
-export default DocPreview;
+export default DocumentViewer;

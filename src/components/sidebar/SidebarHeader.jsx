@@ -10,7 +10,7 @@ import { usePathname } from "next/navigation";
 import UserMenu from "../layouts/UserMenu";
 import NotificationBell from "../common/NotificationBell";
 
-export default function DashboardHeader() {
+const SidebarHeader = () => {
   const pathname = usePathname();
 
   return (
@@ -21,4 +21,6 @@ export default function DashboardHeader() {
       </div>
     </div>
   );
-}
+};
+
+export default SidebarHeader;

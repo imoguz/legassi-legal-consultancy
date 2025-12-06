@@ -5,7 +5,7 @@ import { Layout, Menu, Divider, Spin } from "antd";
 import { useRouter, usePathname } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import SidebarHeader from "@/components/sidebar/SidebarHeader";
 import { getSidebarItems } from "@/utils/constants/sidebarMenuItems";
 import { toggleSidebar, setSidebar } from "@/rtk/features/sidebarSlice";
 import { useAuth } from "@/hooks/useAuth";
@@ -95,7 +95,7 @@ export default function DashboardLayout({ children }) {
 
       <Layout className="min-h-screen">
         <Header className="shadow-sm bg-sider-header! p-0 h-16 flex items-center">
-          <DashboardHeader />
+          <SidebarHeader />
         </Header>
 
         <Content

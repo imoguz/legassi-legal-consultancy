@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, startTransition } from "react";
 import {
   Modal,
   Form,
@@ -26,8 +26,8 @@ import {
   useUpdateTaskMutation,
   useGetTaskMattersQuery,
 } from "@/rtk/api/taskApi";
-
 import { useGetStaffQuery } from "@/rtk/api/userApi";
+
 import { notify } from "@/utils/helpers";
 import dayjs from "dayjs";
 
@@ -51,6 +51,9 @@ const STATUS_OPTIONS = [
   { value: "cancelled", label: "Cancelled", color: "red" },
 ];
 
+/* --------------------------------------------------
+   Checklist Item
+-------------------------------------------------- */
 const ChecklistItem = ({ item, index, items, onChange, onRemove, mode }) => (
   <div className="flex items-center gap-3">
     <Checkbox
@@ -65,6 +68,7 @@ const ChecklistItem = ({ item, index, items, onChange, onRemove, mode }) => (
       size="large"
       className="flex-1"
     />
+
     {items.length > 1 && (
       <Button
         type="default"
@@ -76,6 +80,9 @@ const ChecklistItem = ({ item, index, items, onChange, onRemove, mode }) => (
   </div>
 );
 
+/* --------------------------------------------------
+   Assignee Item
+-------------------------------------------------- */
 const AssigneeItem = ({
   index,
   assignee,
@@ -96,24 +103,24 @@ const AssigneeItem = ({
             : null
         }
         onChange={(v) => onChange(index, "userId", v?.value)}
-        style={{ flex: 1 }}
         options={availableStaff}
+        size="large"
         showSearch={{
           optionFilterProp: "label",
         }}
-        size="large"
+        style={{ flex: 1 }}
         labelInValue
       />
 
       <Select
         value={assignee.isPrimary}
         onChange={(v) => onChange(index, "isPrimary", v)}
-        size="large"
-        style={{ width: 140 }}
         options={[
           { label: "Contributor", value: false },
           { label: "Primary", value: true },
         ]}
+        size="large"
+        style={{ width: 140 }}
       />
 
       <Button
@@ -126,11 +133,17 @@ const AssigneeItem = ({
   );
 };
 
+/* --------------------------------------------------
+   MAIN COMPONENT
+-------------------------------------------------- */
 export default function TaskModal({ visible, onClose, task, mode = "create" }) {
   const [form] = Form.useForm();
+
+  // Mutations
   const [createTask, { isLoading: loadingCreate }] = useCreateTaskMutation();
   const [updateTask, { isLoading: loadingUpdate }] = useUpdateTaskMutation();
 
+  // UI State
   const [assignees, setAssignees] = useState([]);
   const [hasChecklist, setHasChecklist] = useState(false);
   const [checklistItems, setChecklistItems] = useState([
@@ -140,9 +153,13 @@ export default function TaskModal({ visible, onClose, task, mode = "create" }) {
 
   const isLoading = loadingCreate || loadingUpdate;
 
+  // Queries
   const { data: matters } = useGetTaskMattersQuery();
   const { data: staff } = useGetStaffQuery();
 
+  /* --------------------------------------------------
+     Memoized Options
+  -------------------------------------------------- */
   const matterOptions = useMemo(
     () =>
       (matters?.data || []).map((m) => ({
@@ -161,68 +178,74 @@ export default function TaskModal({ visible, onClose, task, mode = "create" }) {
     [staff]
   );
 
-  const getAvailableStaff = () => {
-    const used = assignees.map((a) => a.userId).filter(Boolean);
-    return staffOptions.filter((s) => !used.includes(s.value));
-  };
+  const availableStaff = useMemo(() => {
+    const usedIds = assignees.map((a) => a.userId).filter(Boolean);
+    return staffOptions.filter((s) => !usedIds.includes(s.value));
+  }, [assignees, staffOptions]);
 
+  /* --------------------------------------------------
+     Derive Form + State From Props (React 19 Safe)
+  -------------------------------------------------- */
   useEffect(() => {
     if (!visible) return;
 
-    const id = setTimeout(() => {
-      if (task && mode === "edit") {
-        const formValues = {
-          title: task.title,
-          description: task.description,
-          matter: task.matter?._id,
-          priority: task.priority,
-          status: task.status,
-          dueDate: task.dueDate ? dayjs(task.dueDate) : null,
-          estimatedMinutes: task.estimatedMinutes,
-          visibility: task.visibility,
-          permittedUsers: task.permittedUsers?.map((u) => u._id || u),
-        };
+    if (task && mode === "edit") {
+      const initialValues = {
+        title: task.title,
+        description: task.description,
+        matter: task.matter?._id,
+        priority: task.priority,
+        status: task.status,
+        dueDate: task.dueDate ? dayjs(task.dueDate) : null,
+        estimatedMinutes: task.estimatedMinutes,
+        visibility: task.visibility,
+        permittedUsers: task.permittedUsers?.map((u) => u._id || u),
+      };
 
-        const initialAssignees = (task.assignees || []).map((a) => ({
-          userId: a.user?._id,
-          isPrimary: a.isPrimary,
-        }));
+      const initialAssignees = (task.assignees || []).map((a) => ({
+        userId: a.user?._id,
+        isPrimary: a.isPrimary,
+      }));
 
-        const hasList = task.checklist?.length > 0;
-
-        const initialChecklist = hasList
+      const initialChecklist =
+        task.checklist?.length > 0
           ? task.checklist
           : [{ title: "", completed: false }];
 
-        const initialFiles = (task.attachments || []).map((f) => ({
-          ...f,
-          uid: f._id,
-          status: "done",
-          name: f.filename || f.name,
-          url: f.url || f.path,
-        }));
+      const initialFiles = (task.attachments || []).map((f) => ({
+        ...f,
+        uid: f._id,
+        status: "done",
+        name: f.filename || f.name,
+        url: f.url || f.path,
+      }));
 
-        form.setFieldsValue(formValues);
+      startTransition(() => {
+        form.setFieldsValue(initialValues);
         setAssignees(initialAssignees);
-        setHasChecklist(hasList);
+        setHasChecklist(task.checklist?.length > 0);
         setChecklistItems(initialChecklist);
         setFileList(initialFiles);
-      } else {
+      });
+    } else {
+      startTransition(() => {
         form.resetFields();
         setAssignees([]);
         setHasChecklist(false);
         setChecklistItems([{ title: "", completed: false }]);
         setFileList([]);
-      }
-    }, 0);
+      });
+    }
+  }, [visible, task, mode, form]);
 
-    return () => clearTimeout(id);
-  }, [visible]);
-
+  /* --------------------------------------------------
+     Submit
+  -------------------------------------------------- */
   const handleSubmit = async (values) => {
     try {
       const formData = new FormData();
 
+      // Base fields
       Object.entries({
         title: values.title,
         description: values.description || "",
@@ -237,19 +260,19 @@ export default function TaskModal({ visible, onClose, task, mode = "create" }) {
       if (values.estimatedMinutes)
         formData.append("estimatedMinutes", values.estimatedMinutes);
 
-      // assignees
+      // Assignees
       assignees.forEach((a, i) => {
         if (!a.userId) return;
         formData.append(`assignees[${i}][user]`, a.userId);
         formData.append(`assignees[${i}][isPrimary]`, a.isPrimary);
       });
 
-      // permitted users
+      // Permitted users
       (values.permittedUsers || []).forEach((u) =>
         formData.append("permittedUsers", u)
       );
 
-      // checklist
+      // Checklist
       if (hasChecklist) {
         checklistItems
           .filter((i) => i.title.trim())
@@ -260,11 +283,11 @@ export default function TaskModal({ visible, onClose, task, mode = "create" }) {
           });
       }
 
-      // files
+      // Files
       const newFiles = fileList.filter((f) => f.originFileObj);
       newFiles.forEach((f) => formData.append("files", f.originFileObj));
 
-      // deleted files (edit mode)
+      // Deleted files (edit mode)
       if (mode === "edit" && task) {
         const original = task.attachments || [];
         const remaining = fileList.filter((f) => f._id && !f.originFileObj);
@@ -276,6 +299,7 @@ export default function TaskModal({ visible, onClose, task, mode = "create" }) {
         deleted.forEach((d) => formData.append("deletedAttachments", d._id));
       }
 
+      // Submit
       if (mode === "create") {
         await createTask(formData).unwrap();
         notify.success("Success", "Task created successfully");
@@ -291,15 +315,24 @@ export default function TaskModal({ visible, onClose, task, mode = "create" }) {
     }
   };
 
+  /* --------------------------------------------------
+     Cancel
+  -------------------------------------------------- */
   const handleCancel = () => {
-    form.resetFields();
-    setAssignees([]);
-    setHasChecklist(false);
-    setChecklistItems([{ title: "", completed: false }]);
-    setFileList([]);
+    startTransition(() => {
+      form.resetFields();
+      setAssignees([]);
+      setHasChecklist(false);
+      setChecklistItems([{ title: "", completed: false }]);
+      setFileList([]);
+    });
+
     onClose();
   };
 
+  /* --------------------------------------------------
+     RENDER
+  -------------------------------------------------- */
   return (
     <Modal
       open={visible}
@@ -356,9 +389,7 @@ export default function TaskModal({ visible, onClose, task, mode = "create" }) {
                 options={matterOptions}
                 placeholder="Select matter"
                 loading={!matterOptions.length}
-                showSearch={{
-                  optionFilterProp: "label",
-                }}
+                showSearch={{ optionFilterProp: "label" }}
               />
             </Form.Item>
 
@@ -378,7 +409,7 @@ export default function TaskModal({ visible, onClose, task, mode = "create" }) {
             </Form.Item>
           </div>
 
-          {/* Status – only in edit */}
+          {/* Status (only edit) */}
           {mode === "edit" && (
             <Form.Item name="status" label="Status">
               <Select size="large">
@@ -415,21 +446,21 @@ export default function TaskModal({ visible, onClose, task, mode = "create" }) {
                     index={i}
                     assignee={a}
                     formattedStaff={staffOptions}
-                    availableStaff={getAvailableStaff()}
-                    onChange={(i2, field, v) =>
+                    availableStaff={availableStaff}
+                    onChange={(idx, field, v) =>
                       setAssignees((p) =>
-                        p.map((x, idx) =>
-                          idx === i2 ? { ...x, [field]: v } : x
-                        )
+                        p.map((x, k) => (k === idx ? { ...x, [field]: v } : x))
                       )
                     }
                     onRemove={(idx) =>
-                      setAssignees((p) => p.filter((_, i2) => i2 !== idx))
+                      setAssignees((p) => p.filter((_, k) => k !== idx))
                     }
                   />
                 ))
               )}
             </div>
+
+            {/* Add assignee */}
             <div className="w-full flex justify-center">
               <Button
                 type="dashed"
@@ -441,7 +472,7 @@ export default function TaskModal({ visible, onClose, task, mode = "create" }) {
                     { userId: null, isPrimary: false },
                   ])
                 }
-                disabled={!getAvailableStaff().length}
+                disabled={!availableStaff.length}
               >
                 Add Assignee
               </Button>
@@ -476,15 +507,16 @@ export default function TaskModal({ visible, onClose, task, mode = "create" }) {
                     items={checklistItems}
                     onChange={(idx, key, v) =>
                       setChecklistItems((p) =>
-                        p.map((x, ii) => (ii === idx ? { ...x, [key]: v } : x))
+                        p.map((x, k) => (k === idx ? { ...x, [key]: v } : x))
                       )
                     }
                     onRemove={(idx) =>
-                      setChecklistItems((p) => p.filter((_, ii) => ii !== idx))
+                      setChecklistItems((p) => p.filter((_, k) => k !== idx))
                     }
                     mode={mode}
                   />
                 ))}
+
                 <div className="w-full flex justify-center">
                   <Button
                     type="dashed"
@@ -496,7 +528,6 @@ export default function TaskModal({ visible, onClose, task, mode = "create" }) {
                         { title: "", completed: false },
                       ])
                     }
-                    block
                   >
                     Add Item
                   </Button>
@@ -507,7 +538,7 @@ export default function TaskModal({ visible, onClose, task, mode = "create" }) {
 
           <Divider />
 
-          {/* Additional Fields */}
+          {/* Additional fields */}
           <div className="grid grid-cols-2 gap-4">
             <Form.Item name="dueDate" label="Due Date">
               <DatePicker
@@ -550,6 +581,7 @@ export default function TaskModal({ visible, onClose, task, mode = "create" }) {
           <Button onClick={handleCancel} size="large">
             Cancel
           </Button>
+
           <Button
             type="primary"
             htmlType="submit"
